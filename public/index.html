@@ -1,0 +1,234 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+    <title>Makudonarudo Order Control</title>
+    <script type="importmap">
+      {
+        "imports": {
+          "vue": "https://unpkg.com/vue@3/dist/vue.esm-browser.js"
+        }
+      }
+    </script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+      body {
+        padding: 1rem;
+      }
+
+      .order-default-height {
+        min-height: 400px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      
+      <h1>{{title}}</h1>
+      
+      <div class="container">
+        <div class="row text-center pt-3">
+          <div class="col">
+            <div class="float-start px-1">
+              <button class="btn btn-primary btn-lg" @click="addOrder('normal')">New Normal Order</button>
+            </div>
+            <div class="float-start px-1">
+              <button class="btn btn-primary btn-lg" @click="addOrder('vip')"><i class="bi-star"></i> New VIP Order</button>
+            </div>
+            <div class="float-end px-1">
+              <button class="btn btn-success btn-lg" @click="addBot()">Add Bot</button>
+            </div>
+            <div class="float-end px-1">
+              <button class="btn btn-warning btn-lg" @click="removeBot()">Remove Bot</button>
+            </div>
+            <div class="float-end px-1">
+              <button class="btn btn-danger btn-lg" @click="reset()">Reset All</button>
+            </div>
+            <div class="clearfix"></div>
+          </div>
+        </div>
+
+        <div class="row py-5 column-gap-4 order-default-height">
+          <div class="col bg-warning">
+            <h3>Pending: {{ pendingOrders.length }}</h3>
+            <ul class="list-group py-2">
+              <li class="list-group-item" v-for="order in pendingOrders">
+                {{ order.orderNumber }} <i v-if="order.type === 'vip'" class="bi-star"></i>
+              </li>
+            </ul>
+          </div>
+
+          <div class="col bg-success">
+            <h3>Completed: {{ completeOrders.length }}</h3>
+            <ul class="list-group py-2">
+              <div >
+                <li class="list-group-item" v-for="order in completeOrders">
+                  {{ order.orderNumber }} <i v-if="order.type === 'vip'" class="bi-star"></i>
+                </li>
+              </div>
+            </ul>
+          </div>
+
+          <div class="col bg-dark-subtle">
+            <h3>Bots: {{ bots.length }}</h3>
+            <ul class="list-group py-2">
+              <li class="list-group-item" v-for="(bot, index) in bots" @click="removeBot(index)">
+                {{ bot.name }} <i v-if="bot.order">Processing: {{ bot.order.orderNumber }}</i>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </body>
+
+  <script type="module">
+    // Super verbose way to setup Vue app with Composition API
+    // Doing this to avoid build step
+    // Definitely not recommended, harder to debug
+    import { createApp, ref, onMounted, nextTick } from 'vue';
+  
+    class Order {
+      constructor(type, orderNumber, duration = 3000) {
+        this.type = type;
+        this.orderNumber = orderNumber;
+        this.duration = duration;
+        this.processing = false;
+        this.complete = false;
+      }
+
+      markComplete() {
+        this.complete = true
+      }
+
+      toggleProcessing() {
+        this.processing = this.processing ? false : true;
+      }
+    }
+
+    class Bot {
+      constructor(name) {
+        this.name = name
+        this.order = null;
+        this.timeOut = null;
+      }
+
+      async process(order, pendingOrders, completeOrders) {
+        // After the duration of the order is complete,
+        this.order = order;
+        this.timeOut = await setTimeout(() => {
+          this.order.markComplete();
+          pendingOrders.value = pendingOrders.value.filter(el => !el.complete);
+          completeOrders.value.push(this.order);
+          this.order = null;
+        }, this.order.duration);
+      }
+
+      destroy() {
+        // Return order back to pendingOrders
+        clearTimeout(this.timeOut);
+        this.order.toggleProcessing();
+      }
+    }
+
+    const app = createApp({
+      setup() {
+        const title = ref('Makudonarudo Order Controller');
+        // Single array for Orders can be used, but I'm being verbose for clarity here, 
+        // Hence, it's split between Pending and Complete
+        const pendingOrders = ref([]);
+        const completeOrders = ref([]);
+        const bots = ref([]);
+        const botIdCounter = ref(1);
+        const orderCounter = ref(1001);
+
+        const addOrder = function(type) {
+          let order = new Order(type, orderCounter.value++);
+          pendingOrders.value.push(order);
+
+          // Reorder for vip
+          if(type === 'vip') {
+            rearrangeOrder();
+          }
+        };
+
+        const rearrangeOrder = function() {
+          const vipOrders = [];
+          const normalOrders = [];
+          for(const order of pendingOrders.value) {
+            if(order.type === 'vip') {
+              vipOrders.push(order);
+            } else {
+              normalOrders.push(order);
+            }
+          }
+          pendingOrders.value = [...vipOrders, ...normalOrders];
+        } 
+
+        const addBot = function() {
+          let bot = new Bot(`BOT-${botIdCounter.value++}`);
+          bots.value.push(bot);
+        }
+
+        const removeBot = function(index) {
+          const bot = index !== undefined 
+                            ? bots.value.splice(index, 1).pop() 
+                            : bots.value.pop();
+          bot.destroy();
+        }
+
+        const run = async function() {
+          for(const bot of bots.value) {
+            if(bot.order === null){
+              const order = getNonProcessedOrder();
+              if(order) {
+                const processed = await bot.process(order, pendingOrders, completeOrders);
+                console.log(processed);
+              }
+            }
+          }
+        }
+
+        const getNonProcessedOrder = function() {
+          for(const order of pendingOrders.value) {
+            if(order.processing === false) {
+              order.toggleProcessing();
+              return order;
+            } 
+          }
+
+          return null;
+        }
+
+        const reset = function() {
+          pendingOrders.value = [];
+          completeOrders.value = [];
+          bots.value = [];
+          botIdCounter.value = 1;
+          orderCounter.value = 1001;
+        }
+
+        onMounted(() => {
+          setInterval(() => {
+            run();
+          },1000)
+        });
+
+        return {
+          title,
+          pendingOrders,
+          completeOrders,
+          bots,
+          addOrder,
+          addBot,
+          removeBot,
+          reset,
+        }
+      },
+    });
+
+    app.mount('#app');
+  </script>
+</html>
