@@ -91,7 +91,7 @@
     import { createApp, ref, onMounted, nextTick } from 'vue';
   
     class Order {
-      constructor(type, orderNumber, duration = 10000) {
+      constructor(type, orderNumber, duration = 3000) {
         this.type = type;
         this.orderNumber = orderNumber;
         this.duration = duration;
@@ -115,21 +115,26 @@
         this.timeOut = null;
       }
 
-      async process(order, pendingOrders, completeOrders) {
+      async process(order) {
         // After the duration of the order is complete,
         this.order = order;
-        this.timeOut = await setTimeout(() => {
-          this.order.markComplete();
-          pendingOrders.value = pendingOrders.value.filter(el => !el.complete);
-          completeOrders.value.push(this.order);
-          this.order = null;
-        }, this.order.duration);
+        return new Promise((resolve, reject) => {
+          this.timeOut = setTimeout(() => {
+            this.order.markComplete();
+            const processed = {...this.order};
+            this.order = null;
+            resolve(processed);
+          }, 
+          this.order.duration);
+        });
       }
 
       destroy() {
         // Return order back to pendingOrders
         clearTimeout(this.timeOut);
-        this.order.toggleProcessing();
+        if(this.order) {
+          this.order.toggleProcessing();
+        }
       }
     }
 
@@ -176,7 +181,9 @@
           const bot = index !== undefined 
                             ? bots.value.splice(index, 1).pop() 
                             : bots.value.pop();
-          bot.destroy();
+          if(bot) {
+            bot.destroy();
+          }
         }
 
         const run = async function() {
@@ -184,8 +191,9 @@
             if(bot.order === null){
               const order = getNonProcessedOrder();
               if(order) {
-                const processed = await bot.process(order, pendingOrders, completeOrders);
-                console.log(processed);
+                const processed = await bot.process(order);
+                pendingOrders.value = pendingOrders.value.filter(el => el.orderNumber !== processed.orderNumber);
+                completeOrders.value.push(processed);
               }
             }
           }
