@@ -16,6 +16,7 @@ app.ws('/', function(ws, req) {
     console.log(msg);
   });
   console.log('socket', req.body);
+  ws.send('Received');
 });
 
 // setInterval(() => console.log(uuid.v4()), 1000)

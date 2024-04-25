@@ -90,6 +90,10 @@
           console.log('ws://localhost:3000/ Socket open and Ping')
           socket.send("Ping server");
         };
+
+        socket.onmessage((e) => {
+          console.log(e.data)
+        })
       })
 
       return {

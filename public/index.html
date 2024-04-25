@@ -72,7 +72,7 @@
             <h3>Bots: {{ bots.length }}</h3>
             <ul class="list-group py-2">
               <li class="list-group-item" v-for="(bot, index) in bots" @click="removeBot(index)">
-                {{ bot.name }} <i v-if="bot.order">Processing: {{ bot.order.orderNumber }}</i>
+                {{ bot.name }} <i v-if="bot.order">Processing: {{ bot.order.orderNumber }} Countdown: {{ bot.order.countdown }}</i>
               </li>
             </ul>
           </div>
@@ -86,15 +86,20 @@
     // Super verbose way to setup Vue app with Composition API
     // Doing this to avoid build step
     // Definitely not recommended, harder to debug
-    import { createApp, ref, onMounted, nextTick } from 'vue';
+    import { createApp, ref, onMounted } from 'vue';
   
     class Order {
       constructor(type, orderNumber, duration = 3000) {
         this.type = type;
         this.orderNumber = orderNumber;
         this.duration = duration;
+        this.countdown = duration / 1000;
         this.processing = false;
         this.complete = false;
+      }
+
+      countDown() {
+        this.countdown--;
       }
 
       markComplete() {
@@ -117,7 +122,12 @@
         // After the duration of the order is complete,
         this.order = order;
         return new Promise((resolve, reject) => {
+          const countdownInterval = setInterval(() => {
+            this.order.countDown();
+          }, 1000)
+
           this.timeOut = setTimeout(() => {
+            clearInterval(countdownInterval);
             this.order.markComplete();
             const processed = {...this.order};
             this.order = null;
@@ -129,7 +139,7 @@
 
       destroy() {
         // Return order back to pendingOrders
-        clearTimeout(this.timeOut);
+        clearInterval(this.timeOut);
         if(this.order) {
           this.order.toggleProcessing();
         }
