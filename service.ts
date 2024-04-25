@@ -1,21 +1,21 @@
 import express, { Express, Request, Response } from 'express';
+import expressWs from 'express-ws';
 import * as uuid from 'uuid';
-import ws from 'ws';
 
-const app: Express = express();
+const { app, getWss, applyTo } = expressWs(express());
 const port = 3000;
+app.use(express.static('public'));
 
 app.listen(port, () => {
   console.log(`Macky Dees service listening on port ${port}`)
 })
 
-app.use(express.static('public'))
 
-/*
-  Extra code for the with-server UI
-*/
-app.get('/', (req: Request, res: Response) => {
-  res.send('Hello From Server!')
-})
+app.ws('/', function(ws, req) {
+  ws.on('message', function(msg) {
+    console.log(msg);
+  });
+  console.log('socket', req.body);
+});
 
-setInterval(() => console.log(uuid.v4()), 1000)
+// setInterval(() => console.log(uuid.v4()), 1000)
