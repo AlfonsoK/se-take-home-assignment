@@ -116,18 +116,19 @@
         this.name = name
         this.order = null;
         this.timeOut = null;
+        this.countdownInterval = null;
       }
 
       async process(order) {
         // After the duration of the order is complete,
         this.order = order;
         return new Promise((resolve, reject) => {
-          const countdownInterval = setInterval(() => {
+          this.countdownInterval = setInterval(() => {
             this.order.countDown();
           }, 1000)
 
           this.timeOut = setTimeout(() => {
-            clearInterval(countdownInterval);
+            clearInterval(this.countdownInterval);
             this.order.markComplete();
             const processed = {...this.order};
             this.order = null;
@@ -140,7 +141,9 @@
       destroy() {
         // Return order back to pendingOrders
         clearInterval(this.timeOut);
+        clearInterval(this.countdownInterval);
         if(this.order) {
+          this.order.countdown = this.order.duration / 1000;
           this.order.toggleProcessing();
         }
       }
