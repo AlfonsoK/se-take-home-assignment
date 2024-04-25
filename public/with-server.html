@@ -5,17 +5,98 @@
     }
   }
 </script>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<style>
+  div {
+    padding: 1rem;
+  }
 
-<div id="app">{{ message }}</div>
+  .order-default-height {
+    min-height: 500px;
+  }
+</style>
+
+<div id="app" class="container">
+  <h1>{{ message }}</h1>
+  <div class="row py-2">
+    <div class="col">
+      <div class="float-start">
+        <button class="btn btn-lg btn-primary" @click="addOrder('normal')">Add Order</button>
+      </div>
+      <div class="float-start">
+        <button class="btn btn-lg btn-primary" @click="addOrder('vip')"><i class="bi-star"></i> Add VIP Order</button>
+      </div>
+      <div class="float-end">
+        <button class="btn btn-lg btn-success" @click="addBot()">Add Bot</button>
+      </div>
+      <div class="float-end">
+        <button class="btn btn-lg btn-warning" @click="removeBot()">Remove Bot</button>
+      </div>
+      <div class="float-end">
+        <button class="btn btn-lg btn-danger" @click="reset()">Reset</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="row py-5 column-gap-4 order-default-height">
+    <div class="col bg-warning">
+      <h3>Pending</h3>
+    </div>
+
+    <div class="col bg-success">
+      <h3>Completed</h3>
+    </div>
+
+    <div class="col bg-dark-subtle">
+      <h3>Bots</h3>
+    </div>
+  </div>
+
+  <div>
+
+  </div>
+</div>
 
 <script type="module">
-  import { createApp, ref } from 'vue'
+  import { createApp, ref, onMounted } from 'vue';
 
-  createApp({
-    data() {
+  // State all managed on the server side
+  const app = createApp({
+    setup () {
+      const message = ref('Server based - Makudonarudo Order Control');
+      const socket = new WebSocket("ws://localhost:3000");
+
+      const addOrder = function (type) {
+
+      }
+
+      const addBot = function() {
+
+      }
+
+      const removeBot = function() {
+
+      }
+
+      const reset = function() {
+
+      }
+
+      onMounted(() => {
+
+      })
+
       return {
-        message: 'TODO: Server based'
+        message,
+        addOrder,
+        addBot,
+        removeBot,
+        reset,
       }
     }
-  }).mount('#app')
+  });
+
+  app.mount('#app')
 </script>

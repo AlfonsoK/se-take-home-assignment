@@ -18,7 +18,7 @@
       }
 
       .order-default-height {
-        min-height: 400px;
+        min-height: 500px;
       }
     </style>
   </head>
@@ -62,11 +62,9 @@
           <div class="col bg-success">
             <h3>Completed: {{ completeOrders.length }}</h3>
             <ul class="list-group py-2">
-              <div >
-                <li class="list-group-item" v-for="order in completeOrders">
-                  {{ order.orderNumber }} <i v-if="order.type === 'vip'" class="bi-star"></i>
-                </li>
-              </div>
+              <li class="list-group-item" v-for="order in completeOrders">
+                {{ order.orderNumber }} <i v-if="order.type === 'vip'" class="bi-star"></i>
+              </li>
             </ul>
           </div>
 
